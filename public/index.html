@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<!-- 先导入jquery -->
+	<script type="text/javascript" src="frameworks/jquery-3.0.0/jquery.min.js"></script>
+	<!-- bootstrap依赖jquery -->
+	<script type="text/javascript" src="frameworks/bootstrap-3.3.0/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="frameworks/bootstrap-3.3.0/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<script type="text/javascript">
+		function initStyle(){
+			// 获取浏览器视口的高度
+			var height = $(window).height();
+			var ch = height-210;
+			$('.content').css('height',ch+'px');
+			$('.navleft').css('height',ch+'px');
+		}
+
+		$(function(){
+			initStyle();
+			$('.navleft li').off();  //先解绑后绑定
+			$('.navleft li').on('click',function(){
+				var page = $(this).attr("page");
+				//将子页面加载到.content中
+				$('section.content').load(page);
+			});
+			// trigger模拟点击,默认触发
+			$('.navleft li').eq(0).trigger('click');
+
+
+		})//结束位置
+
+	</script>
+</head>
+<body>
+	<header>
+		<h1>学生选课系统</h1>
+		<ul>
+            <li><a href="">登录</a></li>
+            <li><a href="">没有账号？请注册</a></li>
+            <li><a href="">欢迎您，xxx</a></li>
+        </ul>
+	</header>
+
+	<article class="container">
+		<!--左侧导航  -->
+		<section class="navleft">
+			<ul>
+				<li page="pages/student.html"><a href="javascript:void(0)">学生管理</a></li>
+				<li page="pages/course.html"><a href="javascript:void(0)">课程管理</a></li>
+				<li page="pages/teacher.html"><a href="javascript:void(0)">教师管理</a></li>
+				<li page="pages/clazz.html"><a href="javascript:void(0)">班级管理</a></li>
+				<li page="pages/studentCourse.html"><a href="javascript:void(0)">选课管理</a></li>
+			</ul>
+		</section>
+		<!-- 右侧 -->
+		<section class="content">
+			
+		</section>
+	</article>
+	<footer class="footer">
+		<p class="pull-right">联系我们</p>
+		<address>江苏省苏州市昆山市巴城镇学院路828号</address>
+	</footer>
+
+	
+</body>
+</html>

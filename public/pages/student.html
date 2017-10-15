@@ -1,0 +1,211 @@
+<h3>学生管理</h3>
+<hr>
+<form action="" method="get">
+	<input type="search" name="keys" placeholder="关键字" class="keys">
+	<input type="submit" class="search">
+</form>
+<br>
+<table class="table studentData table-bordered">
+	<thead>
+		<tr>
+			<th>编号</th>
+			<th>姓名</th>
+			<th>性别</th>
+			<th>生日</th>
+			<th>班级</th>
+		</tr>
+	</thead>
+	<tbody>
+		
+	</tbody>
+</table>
+
+<div class="opts">
+	<button class="btn btn-primary btn-sm">修改</button>
+	<button class="btn btn-primary btn-sm">添加</button>
+	<button class="btn btn-primary btn-sm">删除</button>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title title1">修改学生信息</h4>
+        <h4 class="modal-title title2">添加学生信息</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" class="studentForm">
+        	<input type="hidden" name="id">
+        	姓名： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="name"><br><br>
+        	性别： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="gender"><br><br>
+        	生日： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="birth"><br><br>
+        	班级： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="calzz_id"><br><br>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary updBtn">修改</button>
+        <button type="button" class="btn btn-primary saveBtn">添加</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<script type="text/javascript">
+	$(function(){
+		// 查找所有
+		$.getJSON('/student/findAll',function(data){
+			$('.studentData tbody').empty();
+			data.forEach(function(item){
+				var birth = item.birth?item.birth.slice(0,item.birth.indexOf('T')):'';
+				var newTr = $('<tr>'
+					+'<td><input type="checkbox" value="'+item.id+'"></td>'
+					+'<td>'+item.name+'</td>'
+					+'<td>'+item.gender+'</td>'
+					+'<td>'+birth+'</td>'
+					+'<td>'+item.clazz_id+'</td>'
+				+'</tr>');
+				$('.studentData tbody').append(newTr);
+			});
+		});
+
+		//确认修改
+		$('.updBtn').off();
+		$('.updBtn').on('click',function(){
+			var id = $('.studentForm input[name=id]').val();
+			var name = $('.studentForm input[name=name]').val();
+			var gender = $('.studentForm input[name=gender]').val();
+			var birth = $('.studentForm input[name=birth]').val();
+			var clazz_id = $('.studentForm input[name=clazz_id]').val();
+			var newStudent = {
+				id:id,
+				name:name,
+				gender:gender,
+				birth:birth,
+				clazz_id:clazz_id
+			};
+			// console.log(newStudent);
+
+			$.ajax('student/update',{
+				'data':newStudent,
+				'method':'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					// console.log(data);
+					$('.modal').modal('hide');
+					$('.navleft li').eq(0).trigger('click');
+				}
+			});
+		});
+
+		//为修改按钮绑定事件
+		$('.opts button').eq(0).off();
+		$('.opts button').eq(0).on('click',function(){
+			var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			if(ids.length>0){
+				var id = ids[0];
+				$.getJSON('student/findById?id='+id,function(data){
+					 $('.studentForm input[name=id]').val(data[0].id);
+					 $('.studentForm input[name=name]').val(data[0].name);
+					 $('.studentForm input[name=gender]').val(data[0].gender);
+					 $('.studentForm input[name=birth]').val(data[0].birth);
+					 $('.studentForm input[name=clazz_id]').val(data[0].clazz_id);
+					//显示模态框
+					$('h4.title2').hide();
+      				$('button.saveBtn').hide();
+					$('.modal').modal('show');
+				});
+			}else{
+				alert("请选中您要修改的信息");
+			}
+		});
+
+		
+
+		//为添加按钮绑定事件
+		$('.opts button').eq(1).off();
+		$('.opts button').eq(1).on('click',function(){
+			//显示模态框
+			$('h4.title1').hide();
+      		$('button.updBtn').hide();
+			$('.modal').modal('show');
+		});
+		//确认添加
+		$('.saveBtn').off();
+		$('.saveBtn').on('click',function(){
+			var name = $('.studentForm input[name = name]').val();
+			var gender = $('.studentForm input[name = gender]').val();
+			var birth = $('.studentForm input[name = birth]').val();
+			var clazz_id = $('.studentForm input[name = clazz_id]').val();
+			var newStudent={
+				name:name,
+				gender:gender,
+				birth:birth,
+				clazz_id:clazz_id
+			};
+			console.log(newStudent);
+			$.ajax('student/save',{
+				'data':newStudent,
+				'method':"POST",
+				'content-Type':'application/json',
+				success:function(data){
+					$('.modal').modal('hide');
+					$('.navleft li').eq(0).trigger('click');
+				}
+			});
+		});
+
+
+		//为删除按钮绑定事件
+		$('.opts button').eq(2).off();
+		$('.opts button').eq(2).on('click',function(){
+			var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			// console.log(ids);
+			$.ajax({
+				type:'POST',
+				url:'student/batchDelete',
+				data:JSON.stringify(ids),
+				'contentType':"application/json",
+				success:function(data){
+					alert("删除"+data.affectedRows+"条");
+					$('.navleft li').eq(0).trigger('click');
+				}
+			});
+		});
+
+		//模糊查询
+		$('form .search').off();
+		$('form .search').on('click',function(event){
+			event.preventDefault();
+			var keys=[];
+			var a = $('form .keys').val();
+			keys.push(a);
+			// console.log(keys);
+
+			$.getJSON('student/query/'+keys,function(data){
+				$('.studentData tbody').empty();
+				// console.log(data);
+				data.forEach(function(item){
+					var birth = item.birth?item.birth.slice(0,item.birth.indexOf('T')):'';
+					var newTr = $('<tr>'
+						+'<td><input type="checkbox" value="'+item.id+'"></td>'
+						+'<td>'+item.name+'</td>'
+						+'<td>'+item.gender+'</td>'
+						+'<td>'+birth+'</td>'
+						+'<td>'+item.clazz_id+'</td>'
+					+'</tr>');
+					$('tbody').append(newTr);
+				});
+			});
+		});
+
+
+	})//结束位置
+</script>

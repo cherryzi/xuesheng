@@ -1,0 +1,190 @@
+<h3>课程管理</h3>
+<hr>
+<form action="" method="get" class="search">
+	<input type="search" name="keys" placeholder="keys" class="keys">
+	<input type="submit" class="submit">
+</form>
+<br>
+<table class="table courseData table-bordered">
+	<thead>
+		<tr>
+			<th>编号</th>
+			<th>姓名</th>
+			<th>学分</th>
+		</tr>
+	</thead>
+	<tbody>
+		
+		
+	</tbody>
+</table>
+<div>
+	<button class="modify btn btn-primary btn-sm">修改</button>
+	<button class="add btn btn-primary btn-sm">添加</button>
+	<button class="remove btn btn-primary btn-sm">删除</button>
+</div>
+<div class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title title1">modify course message</h4>
+        <h4 class="modal-title title2">add course message</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" class="courseForm">
+        	<input type="hidden" name="id"><br>
+        	name:<input type="text" name="name"><br>
+        	credit:<input type="text" name="credit"><br>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary updBtn">Save changes</button>
+        <button type="button" class="btn btn-primary addBtn">Save</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script type="text/javascript">
+	$(function(){
+		$.getJSON('/course/findAll',function(data){
+			$('.courseData tbody').empty()
+			data.forEach(function(item){
+				var newTr = $('<tr>'
+					+'<td> <input type="checkbox" value="'+item.id+'"></td>'
+					+'<td>'+item.name+'</td>'
+					+'<td>'+item.credit+'</td>'
+				+'</tr>')
+				$('.courseData tbody').append(newTr)
+			});
+		});
+
+		//xiu gai
+		$('.modify').on('click',function(){
+			$('h4.title2').hide();
+			$('h4.title1').show();
+			$('button.addBtn').hide();
+			$('button.updBtn').show();
+			var ids = $('.courseData :checkbox:checked').map(function(index,item){
+				return item.value;
+			}).toArray();
+			if(ids.length==1){
+				var id = ids[0];
+				$.getJSON('/course/findById?id='+id,function(data){
+					//input value into form
+					$('.courseForm input[name=id]').val(data[0].id);
+					$('.courseForm input[name=name]').val(data[0].name);
+					$('.courseForm input[name=credit]').val(data[0].credit);
+					//mo tai kuang
+					$('.modal').modal('show');
+				})
+			}else{
+			alert("error");
+			}
+		});
+
+		$('.updBtn').off();
+		$('.updBtn').on('click',function(){
+			
+			var id=$('.courseForm input[name=id]').val();
+			var name=$('.courseForm input[name=name]').val();
+			var credit=$('.courseForm input[name=credit]').val();
+			var newcourse={
+				id:id,
+				name:name,
+				credit:credit,
+			};
+			// console.log("'course/update'+ or +'course/save'");
+			$.ajax('course/update',{
+				'data':newcourse,
+				'method':'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					console.log(data);
+					$('modal').modal('hide');
+					$('.navleft li').eq(1).trigger('click');
+				}
+			})
+		})
+
+		//tian  jia
+		$('.add').on('click',function(){
+				// $('.courseForm input').empty();
+				$('h4.title1').hide();
+				$('h4.title2').show();
+				$('button.updBtn').hide();
+				$('button.addBtn').show();	
+				//mo tai kuang
+				$('.modal').modal('show');
+		});
+
+
+		$('.addBtn').off();
+		$('.addBtn').on('click',function(){
+			
+			// var id=$('.courseForm input[name=id]').val();
+			var name=$('.courseForm input[name=name]').val();
+			var credit=$('.courseForm input[name=credit]').val();
+			var newcourse={
+				// id:id,
+				name:name,
+				credit:credit,
+			};
+			$.ajax('course/save',{
+				'data':newcourse,
+				'method':'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					console.log(data);
+					$('modal').modal('hide');
+					$('.navleft li').eq(1).trigger('click');
+				}
+			})
+		});
+
+		//shan chu
+		$('.remove').on('click',function(){	
+			var ids = $('.courseData :checkbox:checked').map(function(index,item){
+				return $(item).val();
+			}).toArray();
+			console.log(ids);
+			console.log(JSON.stringify(ids));
+			$.ajax({
+				type:'POST',
+				url:'course/batchDelete',
+				data:JSON.stringify(ids),
+				'contentType':'application/json',
+				success:function(data){
+					alert("success "+data.affectedRows+" count");
+					$('.navleft li').eq(1).trigger('click');
+				}
+			})
+		});
+
+		//mo hu cha xun 
+		$('form.search .submit').off();
+		$('form.search .submit').on(
+			'click',function(event){
+				event.preventDefault();
+				$('tbody').empty();
+				// var keys = [];
+				var d = $('.search .keys').val();
+				// keys.push(d);
+				// console.log(keys);
+
+				$.getJSON('/course/query/'+d,function(data){	
+			       data.forEach(function(item){
+				    var newTr = $('<tr>'
+					+'<td> <input type="checkbox" value="'+item.id+'"></td>'
+					+'<td>'+item.name+'</td>'
+					+'<td>'+item.credit+'</td>'
+					+'</tr>')
+					$('.courseData tbody').append(newTr)
+				    });
+			        
+				});		
+		});
+	})
+</script>

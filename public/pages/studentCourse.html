@@ -1,0 +1,194 @@
+<h3>选课管理</h3>
+<hr>
+<form action="" method="get">
+	<input type="search" name="keys" placeholder="关键字" class="keys">	
+	<input type="submit" class="search">	
+</form>
+<br>
+
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th>编  号</th>
+			<th>成  绩</th>
+			<th>学生编号</th>
+			<th>课程编号</th>
+		</tr>
+	</thead>
+	<tbody>
+		
+	</tbody>
+</table>
+
+<div class="opts">
+	<button class="btn btn-primary btn-sm">修改</button>
+	<button class="btn btn-primary btn-sm">添加</button>
+	<button class="btn btn-primary btn-sm">删除</button>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title title1">修改选课信息</h4>
+        <h4 class="modal-title title2">添加选课信息</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" class="studentCourseForm">
+        	<input type="hidden" name="id">
+        	成绩 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="grade"><br><br>
+        	学生编号 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="student_id"><br><br>
+        	课程编号 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="course_id"><br><br>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary updBtn">修改</button>
+        <button type="button" class="btn btn-primary saveBtn">添加</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script type="text/javascript">
+	$(function(){
+
+	//显示所有
+		$.getJSON('studentCourse/findAll',function(data){
+			$('tbody').empty();
+			data.forEach(function(item){
+				var newTr = $('<tr>'
+					+'<td><input type="checkbox" value="'+item.id+'"></td>'
+					+'<td>'+item.grade+'</td>'
+					+'<td>'+item.student_id+'</td>'
+					+'<td>'+item.course_id+'</td>'
+				+'</tr>');
+				$('tbody').append(newTr);
+			});
+		});
+
+	//修改
+		$('.opts button').eq(0).off();
+		$('.opts button').eq(0).on('click',function(){
+			var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			// console.log(ids);
+			if(ids.length>0){
+				var id = ids[0];
+				$.getJSON('studentCourse/findById?id='+id,function(data){
+					$(".studentCourseForm input[name=id]").val(data[0].id);
+					$(".studentCourseForm input[name=grade]").val(data[0].grade);
+					$(".studentCourseForm input[name=student_id]").val(data[0].student_id);
+					$(".studentCourseForm input[name=course_id]").val(data[0].course_id);
+
+					$('h4.title2').hide();
+					$('button.saveBtn').hide();
+					$('.modal').modal('show');
+				});
+			}else{
+				alert("请选中您要修改的信息");
+			}
+		});
+	//确定修改
+		$('.updBtn').off();
+		$('.updBtn').on('click',function(){
+			var id = $('.studentCourseForm input[name=id]').val();
+			var grade = $('.studentCourseForm input[name=grade]').val();
+			var student_id = $('.studentCourseForm input[name=student_id]').val();
+			var course_id = $('.studentCourseForm input[name=course_id]').val();
+			var newStudentCourse={
+				id:id,
+				grade:grade,
+				student_id:student_id,
+				course_id:course_id
+			};
+			// console.log(newStudentCourse);
+			$.ajax('studentCourse/update',{
+				data:newStudentCourse,
+				method:'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					$('.modal').modal('hide');
+					$('.navleft li').eq(4).trigger('click');
+				}
+			});
+		});
+
+	//添加
+		$('.opts button').eq(1).off();
+		$('.opts button').eq(1).on('click',function(){
+			$('h4.title1').hide();
+			$('button.updBtn').hide();
+			$('.modal').modal('show');
+		});
+
+		$('.saveBtn').off();
+		$('.saveBtn').on('click',function(){
+			var grade = $('.studentCourseForm input[name=grade]').val();
+			var student_id = $('.studentCourseForm input[name=student_id]').val();
+			var course_id = $('.studentCourseForm input[name=course_id]').val();
+			var newStudentCourse={
+				grade:grade,
+				student_id:student_id,
+				course_id:course_id
+			};
+			$.ajax('studentCourse/save',{
+				data:newStudentCourse,
+				method:'POST',
+				'content-Type':'application/json',
+				success:function(){
+					$('.modal').modal('hide');
+					$('.navleft li').eq(4).trigger('click');
+				}
+			});
+
+		});
+
+	//删除
+		$('.opts button').eq(2).off();
+		$('.opts button').eq(2).on('click',function(){
+			var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			// console.log(ids);
+			$.ajax({
+				url:'studentCourse/batchDelete',
+				data:JSON.stringify(ids),
+				type:'POST',
+				'contentType':'application/json',
+				success:function(data){
+					alert("成功删除"+data.affectedRows+"条");
+					$('.navleft li').eq(4).trigger('click');
+				}
+			});
+		});
+
+	//模糊查询
+		$('form .search').off();
+		$('form .search').on('click',function(event){
+			event.preventDefault();
+			var keys=[];
+			var a = $('form .keys').val();
+			keys.push(a);
+			// console.log(keys);
+
+			$.getJSON('studentCourse/query/'+keys,function(data){
+				$('tbody').empty();
+				// console.log(data);
+				data.forEach(function(item){
+					newTr = $('<tr>'
+						+'<td><input type="checkbox" value="'+item.id+'"></td>'
+						+'<td>'+item.grade+'</td>'
+						+'<td>'+item.student_id+'</td>'
+						+'<td>'+item.course_id+'</td>'
+					+'</tr>');
+					$('tbody').append(newTr);
+				});
+			});
+		});
+
+	});//结束部分
+</script>

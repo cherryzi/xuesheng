@@ -1,0 +1,203 @@
+<!-- 子页面teacher.html -->
+<h3>教师信息</h3>
+<hr>
+<form action="" method="get" class="search">
+  <input type="search" placeholder="关键字"　name="keys">
+  <input type="submit">
+</form>
+<br>
+<table class="table teacherData table-bordered">
+<!-- 将其放置在thead下，当每次清空时，不会将这一行给清空 -->
+  <thead>
+    <tr>
+      <th>编号</th>
+      <th>姓名</th>
+      <th>电话号码</th>
+    </tr>
+  </thead>
+<!-- 通过jquery来将发送回来的数据封装到表格中，并加载到此处 -->
+  <tbody>
+      
+  </tbody>
+</table>
+
+<!--  按钮-->
+<div class="opts">
+  <button class="btn btn-primary btn-sm">修改</button>
+  <button class="btn btn-primary btn-sm">添加</button>
+  <button class="btn btn-primary btn-sm">删除</button>
+</div>
+
+<!--模态框  -->
+<div class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title title1">修改教师信息</h4>
+        <h4 class="modal-title title2">添加教师信息</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" class="teacherForm">
+          <input type="hidden" name="id">
+          姓名 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  <input type="text" name="name">
+                  <br>
+                  <br>
+          电话号码&nbsp; 
+                  <input type="text" name="telephone">  
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary updBtn">Save changes</button>
+        <button type="button" class="btn btn-primary addBtn">Save</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+  
+<!-- 功能操作的实现 -->
+<script type="text/javascript">
+  $(function(){
+//1.查找所有
+    $.getJSON('teacher/findAll',function(data){
+      data.forEach(function(item){
+        var newTr = $('<tr>'
+        +'<td><input type="checkbox" value="'+item.id+'"></td>'
+        +'<td>'+item.name+'</td>'
+        +'<td>'+item.telephone+'</td>'
+      +'</tr>');
+        $('tbody').append(newTr);
+      });
+    });
+
+//2.修改功能
+    //2.1为修改按钮绑定事件
+    $('.opts button').eq(0).off();
+    $('.opts button').eq(0).on('click',function(){
+      $('h4.title2').hide();
+      $('button.addBtn').hide();
+      var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+        return item.value;
+      });
+      //若用户选择了多个，只修改第一个
+      if(ids.length>0){
+        var id = ids[0];
+        $.getJSON('teacher/findById?id='+id,function(data){
+          //将默认值塞到模态框:
+          $('.teacherForm input[name=id]').val(data[0].id);
+          $('.teacherForm input[name=name]').val(data[0].name);
+          $('.teacherForm input[name=telephone]').val(data[0].telephone);
+          //显示模态框
+          $('.modal').modal('show');
+        });
+      }else{
+        alert("请选中您要修改的信息");
+      }
+    });
+  //2.2确认修改:将用户修改好的信息传送回数据库
+    $('.updBtn').off();
+    $('.updBtn').on('click',function(){
+      //将数据封装
+      var id = $('.teacherForm input[name=id]').val();
+      var name = $('.teacherForm input[name=name]').val();
+      var telephone = $('.teacherForm input[name=telephone]').val();
+      var newStudent ={
+        id:id,
+        name:name,
+        telephone:telephone
+      };
+      // console.log(newStudent);
+      //将数据传送
+      $.ajax('teacher/update',{
+        'data':newStudent,
+        'method':'POST',
+        'content-Type':'application/json',
+        success:function(data){
+          console.log(data);
+          $('.modal').modal('hide');
+          $('.navleft li').eq(2).trigger('click');//重新加载
+        }
+      });
+    });
+
+//3.添加功能
+    $('.opts button').eq(1).off();
+    $('.opts button').eq(1).on('click',function(){
+      $('h4.title2').show();
+      $('h4.title1').hide();
+      $('button.addBtn').show();
+      $('button.updBtn').hide();
+      //显示模态框
+      $('.modal').modal('show'); 
+    });
+
+    $('.addBtn').off();
+    $('.addBtn').on('click',function(){
+      var name = $('.teacherForm input[name=name]').val();
+      var telephone = $('.teacherForm input[name=telephone]').val();
+      var newTeacher ={
+        name:name,
+        telephone:telephone
+      };
+      //将数据传送
+      $.ajax('teacher/save',{
+        'data':newTeacher,
+        'method':'POST',
+        'content-Type':'application/json',
+        success:function(data){
+          // console.log(data);
+          $('.modal').modal('hide');
+          $('.navleft li').eq(2).trigger('click');//重新加载
+        }
+      });
+    });
+
+//4.删除功能
+       $('.opts button').eq(2).off();
+       $(".opts button").eq(2).on('click',function(){
+        var ids=$('input:checkbox:checked').map(function(index,item){
+          return $(item).val();
+        }).toArray();
+        console.log(ids);
+        //使用ajax技术来进行前后台交互
+        $.ajax({
+          type:"POST",
+          url:"teacher/batchDelete",
+          data:JSON.stringify(ids), //使用就ＪＳＯＮ数据格式来进行前后台的交互
+          'contentType':"application/json", //http协议
+          success:function(data){
+            alert("成功删除 "+data.affectedRows+"条");
+            $('.navleft li').eq(2).trigger('click');//重新加载
+          }
+        });
+      }); 
+
+//5.模糊查询
+    $('form.search').off();
+    $('form.search').on('submit',function(event){
+      //先清空，再添加查询到的行列
+      $('tbody').empty();
+      var keys=[];
+       var d=$(".search input")[0].value;
+       keys.push(d);
+       // console.log(keys);
+       //将查询出的东西展现
+        $.getJSON('teacher/query/'+keys,function(data){
+              // console.log(data);
+              data.forEach(function(item){
+                var newTr = $('<tr>'
+                +'<td><input type="checkbox" value="'+item.id+'"></td>'
+                +'<td>'+item.name+'</td>'
+                +'<td>'+item.telephone+'</td>'
+                +'</tr>');
+                $('tbody').append(newTr);
+               });
+        });
+      event.preventDefault();
+
+    });
+
+  });
+</script>

@@ -1,0 +1,192 @@
+<h3>班级管理</h3>
+<hr>
+<form action="" method="get">
+	<input type="search" name="keys" placeholder="关键字" class="keys">
+	<input type="submit" name="" class="search">
+</form>
+<br>
+
+<table class="table clazzData table-bordered">
+	<thead>
+		<tr>
+			<th>编号</th>
+			<th>班级</th>
+			<th>创建时间</th>
+			<th>教师号</th>
+		</tr>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
+
+<div class="opts">
+	<button class="btn btn-primary btn-sm">修改</button>
+	<button class="btn btn-primary btn-sm">添加</button>
+	<button class="btn btn-primary btn-sm">删除</button>
+</div>
+
+<!-- 模态框 -->
+<div class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title title1">修改班级信息</h4>
+        <h4 class="modal-title title2">添加班级信息</h4>
+      </div>
+      <div class="modal-body">
+        <form action="" class="clazzForm">
+        	<input type="hidden" name="id">
+        	班级： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="name"><br><br>
+        	创建时间 ： &nbsp;&nbsp;<input type="text" name="createDate"><br><br>
+        	教师号： &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="teacher_id"><br><br>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary updBtn">修改</button>
+        <button type="button" class="btn btn-primary saveBtn">添加</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script type="text/javascript">
+	$(function(){
+
+	//1.显示所有信息
+		$.getJSON('/clazz/findAll',function(data){
+			$('.clazzData tbody').empty();
+			data.forEach(function(item){
+				var newTr = $('<tr>'
+					+'<td><input type="checkbox" value="'+item.id+'"></td>'
+					+'<td>'+item.name+'</td>'
+					+'<td>'+item.createDate.slice(0,item.createDate.indexOf('T'))+'</td>'
+					+'<td>'+item.teacher_id+'</td>'
+				+'</tr>');
+				$('.clazzData tbody').append(newTr);
+			});
+		});
+
+	//2.修改(绑定事件)
+		$('.opts button').eq(0).off();
+		$('.opts button').eq(0).on('click',function(){
+			var ids = $('tbody input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			// console.log(ids);
+			if(ids.length>0){
+				var id = ids[0];
+				$.getJSON('clazz/findById?id='+id,function(data){
+					// console.log(data);
+					$('.clazzForm input[name=id]').val(data[0].id);
+					$('.clazzForm input[name=name]').val(data[0].name);
+					$('.clazzForm input[name=createDate]').val(data[0].createDate);
+					$('.clazzForm input[name=teacher_id]').val(data[0].teacher_id);
+
+					// 显示模态框
+					$('h4.title2').hide();
+					$('button.saveBtn').hide();
+					$('.modal').modal('show');
+				});
+			}else{
+				alert("请选中您要修改的信息");
+			}
+		});
+	//修改的确认按钮
+		$('.updBtn').off();
+		$('.updBtn').on('click',function(){
+			var id = $('.clazzForm input[name=id]').val();
+			var name = $('.clazzForm input[name=name]').val();
+			var createDate = $('.clazzForm input[name=createDate]').val();
+			var teacher_id = $('.clazzForm input[name=teacher_id]').val();
+			var newClazz = {
+				id:id,
+				name:name,
+				createDate:createDate,
+				teacher_id:teacher_id
+			};
+			console.log(newClazz);
+			$.ajax('/clazz/update',{
+				data:newClazz,
+				type:'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					$('.modal').modal('hide');
+					$('.navleft li').eq(3).trigger('click');
+				}
+			}); 
+		});
+
+	//3.添加功能
+		$('.opts button').eq(1).off();
+		$('.opts button').eq(1).on('click',function(){
+			$('h4.title1').hide();
+			$('.updBtn').hide();
+			$('.modal').modal('show');
+		});
+
+		$('.saveBtn').off();
+		$('.saveBtn').on('click',function(){
+			var name = $('.clazzForm input[name=name]').val();
+			var createDate = $('.clazzForm input[name=createDate]').val();
+			var teacher_id = $('.clazzForm input[name=teacher_id]').val();
+			var newClazz = {
+				name:name,
+				createDate:createDate,
+				teacher_id:teacher_id
+			};
+
+			$.ajax('clazz/save',{
+				'data':newClazz,
+				'method':'POST',
+				'content-Type':'application/json',
+				success:function(data){
+					$('.modal').modal('hide');
+					$('.navleft li').eq(3).trigger('click');
+				}
+			});
+		});
+
+	//4.删除功能
+		$('.opts button').eq(2).off();
+		$('.opts button').eq(2).on('click',function(){
+			var ids = $('input:checkbox:checked').toArray().map(function(item){
+				return item.value;
+			});
+			console.log(ids);
+			$.ajax({
+				type:'POST',
+				url:"clazz/batchDelete",
+				data:JSON.stringify(ids),
+				'contentType':'application/json',
+				success:function(data){
+					alert("成功删除"+data.affectedRows+"条");
+					$('.navleft li').eq(3).trigger('click');
+				}
+			});
+		});
+
+	//5.模糊查询
+		$('form .search').off();
+		$('form .search').on('click',function(event){
+			event.preventDefault();
+			var keys = [];
+			var a = $('form .keys').val();
+			keys.push(a);
+			$.getJSON('clazz/query/'+keys,function(data){
+				$('.clazzData tbody').empty();
+				data.forEach(function(item){
+					var newTr = $('<tr>'
+						+'<td><input type="checkbox" value="'+item.id+'"></td>'
+						+'<td>'+item.name+'</td>'
+						+'<td>'+item.createDate.slice(0,item.createDate.indexOf('T'))+'</td>'
+						+'<td>'+item.teacher_id+'</td>'
+					+'</tr>');
+					$('.clazzData tbody').append(newTr);
+				});
+			});
+		});
+
+	});// 结束位置
+</script>
